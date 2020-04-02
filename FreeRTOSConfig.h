@@ -1,6 +1,8 @@
 /*
- * FreeRTOS Kernel V10.0.1
- * Copyright (C) 2017 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ * Copyright (C) 2019 Cypress Semiconductor Corporation. or a subsidiary of
+ * Cypress Semiconductor Corporation.  All Rights Reserved.
+ *
+ * Updated configuration to support PSoC 6 MCU.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -19,11 +21,10 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * http://www.FreeRTOS.org
- * http://aws.amazon.com/freertos
+ * http://www.Cypress.com
  *
- * 1 tab == 4 spaces!
-*/
+ *
+ */
 
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H

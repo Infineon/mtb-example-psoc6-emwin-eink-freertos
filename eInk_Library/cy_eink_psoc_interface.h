@@ -62,16 +62,16 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-#define EINK_MOSI		CYBSP_D11
-#define EINK_MISO     	CYBSP_D12
-#define EINK_SCLK 		CYBSP_D13
-#define EINK_DISPCS		CYBSP_D10	/* SPI CS output pin */
-#define EINK_DISPRST	CYBSP_D2	/* Display reset output pin */
-#define EINK_DISPBUSY	CYBSP_D3	/* Display busy input pin */
-#define EINK_DISCHARGE	CYBSP_D5	/* Display discharge output pin */
-#define EINK_DISPEN		CYBSP_D4	/* Display enable output pin */
-#define EINK_BORDER		CYBSP_D6	/* Display border output pin */
-#define EINK_DISPIOEN	CYBSP_D7	/* Display IO Enable output pin */
+#define EINK_MOSI       CYBSP_D11
+#define EINK_MISO       CYBSP_D12
+#define EINK_SCLK       CYBSP_D13
+#define EINK_DISPCS     CYBSP_D10   /* SPI CS output pin */
+#define EINK_DISPRST    CYBSP_D2    /* Display reset output pin */
+#define EINK_DISPBUSY   CYBSP_D3    /* Display busy input pin */
+#define EINK_DISCHARGE  CYBSP_D5    /* Display discharge output pin */
+#define EINK_DISPEN     CYBSP_D4    /* Display enable output pin */
+#define EINK_BORDER     CYBSP_D6    /* Display border output pin */
+#define EINK_DISPIOEN   CYBSP_D7    /* Display IO Enable output pin */
 
 /* Macros used for byte level operations */
 #define CY_EINK_BYTE_SIZE      (uint8_t)(0x08u)
@@ -129,7 +129,7 @@ void        Cy_EINK_TimerStop(void);
 uint32_t    Cy_EINK_GetTimeTick(void);
 
 /* Functions used for E-INK driver communication */
-void 		CY_EINK_InitDriver(void);
+void        CY_EINK_InitDriver(void);
 void        Cy_EINK_InitSPI(void);
 void        Cy_EINK_AttachSPI(void);
 void        Cy_EINK_DetachSPI(void);

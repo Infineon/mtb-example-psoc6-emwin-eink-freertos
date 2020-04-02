@@ -1,20 +1,21 @@
 /******************************************************************************
+* 
 * File Name: eInkTask.c
 *
 *******************************************************************************
-* Copyright (2019), Cypress Semiconductor Corporation. All rights reserved.
+* (c) 2019-2020, Cypress Semiconductor Corporation. All rights reserved.
 *******************************************************************************
 * This software, including source code, documentation and related materials
-* (“Software”), is owned by Cypress Semiconductor Corporation or one of its
-* subsidiaries (“Cypress”) and is protected by and subject to worldwide patent
+* ("Software"), is owned by Cypress Semiconductor Corporation or one of its
+* subsidiaries ("Cypress") and is protected by and subject to worldwide patent
 * protection (United States and foreign), United States copyright laws and
 * international treaty provisions. Therefore, you may use this Software only
 * as provided in the license agreement accompanying the software package from
-* which you obtained this Software (“EULA”).
+* which you obtained this Software ("EULA").
 *
 * If no EULA applies, Cypress hereby grants you a personal, non-exclusive,
 * non-transferable license to copy, modify, and compile the Software source
-* code solely for use in connection with Cypress’s integrated circuit products.
+* code solely for use in connection with Cypress's integrated circuit products.
 * Any reproduction, modification, translation, compilation, or representation
 * of this Software except as specified above is prohibited without the express
 * written permission of Cypress.
@@ -27,24 +28,24 @@
 * Software or any product or circuit described in the Software. Cypress does
 * not authorize its products for use in any products where a malfunction or
 * failure of the Cypress product may reasonably be expected to result in
-* significant property damage, injury or death (“High Risk Product”). By
-* including Cypress’s product in a High Risk Product, the manufacturer of such
+* significant property damage, injury or death ("High Risk Product"). By
+* including Cypress's product in a High Risk Product, the manufacturer of such
 * system or application assumes all risk of such use and in doing so agrees to
 * indemnify Cypress against all liability.
-********************************************************************************/
+*******************************************************************************/
 /******************************************************************************
 * This file contains the code of E-Ink that demonstrates controlling a EInk
 * display using the EmWin Graphics Library. The project displays a start up
 * screen with Cypress logo and text "CYPRESS EMWIN GRAPHICS DEMO EINK DISPLAY".
 * The project then displays the following screens in a loop
 *
-*	1. A screen showing various text alignments, styles and modes
+*   1. A screen showing various text alignments, styles and modes
 *   2. A screen showing normal fonts
-*	3. A screen showing bold fonts
-*	4. A screen showing 2D graphics with horizontal lines, vertical lines
-*		arcs and filled rounded rectangle
-*	5. A screen showing 2D graphics with concentric circles and ellipses
-*	6. A screen showing a text box with wrapped text
+*   3. A screen showing bold fonts
+*   4. A screen showing 2D graphics with horizontal lines, vertical lines
+*       arcs and filled rounded rectangle
+*   5. A screen showing 2D graphics with concentric circles and ellipses
+*   6. A screen showing a text box with wrapped text
 *
  *******************************************************************************/
 #include "cyhal.h"
@@ -90,10 +91,10 @@ uint16_t ElapsedTime = 0;
 ********************************************************************************
 *
 * Summary: This function updates the display with the data in the display
-*			buffer.  The function first transfers the content of the EmWin
-*			display buffer to the primary EInk display buffer.  Then it calls
-*			the Cy_EINK_ShowFrame function to update the display, and then
-*			it copies the EmWin display buffer to the Eink display cache buffer
+*           buffer.  The function first transfers the content of the EmWin
+*           display buffer to the primary EInk display buffer.  Then it calls
+*           the Cy_EINK_ShowFrame function to update the display, and then
+*           it copies the EmWin display buffer to the Eink display cache buffer
 *
 * Parameters:
 *  None
@@ -125,7 +126,7 @@ void UpdateDisplay(cy_eink_update_t updateMethod, bool powerCycle)
 ********************************************************************************
 *
 * Summary: This function displays the startup screen with Cypress Logo and
-*			the demo description text
+*           the demo description text
 *
 * Parameters:
 *  None
@@ -160,7 +161,7 @@ void ShowStartupScreen(void)
 ********************************************************************************
 *
 * Summary: This function shows screen with instructions to press SW2 to
-*			scroll through various display pages
+*           scroll through various display pages
 *
 * Parameters:
 *  None
@@ -320,9 +321,9 @@ void ShowFontSizesBold(void)
 ********************************************************************************
 *
 * Summary: This function displays the following
-*			1. Left, Center and Right aligned text
-*			2. Underline, overline and strikethrough style text
-*			3. Normal, reverse, transparent and XOR text modes
+*           1. Left, Center and Right aligned text
+*           2. Underline, overline and strikethrough style text
+*           3. Normal, reverse, transparent and XOR text modes
 *
 * Parameters:
 *  None
@@ -392,13 +393,13 @@ void ShowTextModes(void)
     GUI_SetTextStyle(GUI_TS_NORMAL);
 
     /* Display text in normal mode. This will print black text in
-    	a white box */
+        a white box */
     GUI_SetTextAlign(GUI_TA_HCENTER);
     GUI_SetTextMode(GUI_TM_NORMAL);
     GUI_DispStringAt("TEXT MODE NORMAL", 132, 135);
 
     /* Display text in reverse mode. This will print black text n
-    	a white box */
+        a white box */
     GUI_SetTextAlign(GUI_TA_HCENTER);
     GUI_SetTextMode(GUI_TM_REV);
     GUI_DispStringAt("TEXT MODE REVERSE", 132, 150);
@@ -431,7 +432,12 @@ void ShowTextWrapAndOrientation(void)
     const char leftText[] = "ROTATED TEXT CCW";
     const char rightText[] = "ROTATED TEXT CW";
 
-    const char middleText[] = "This project demonstrates displaying 2D graphics in an EInk display using Segger EmWin Graphics Library. \n\nThis page shows the text wrap and text rotation features. In the left rectangle, the text is rotated counter clockwise and in the right rectangle, the text is rotated clockwise.";
+    const char middleText[] = "This project demonstrates displaying 2D graphics"
+                              " in an EInk display using Segger EmWin Graphics "
+                              "Library. \n\nThis page shows the text wrap and "
+                              "text rotation features. In the left rectangle, "
+                              "the text is rotated counter clockwise and in the"
+                              " right rectangle, the text is rotated clockwise.";
 
 
     /* Set font size, foreground and background colors */
@@ -454,10 +460,12 @@ void ShowTextWrapAndOrientation(void)
     GUI_DrawRectEx(&middleRect);
 
     /* Display string in left rectangle rotated counter clockwise */
-    GUI_DispStringInRectEx(leftText, &leftRect, GUI_TA_HCENTER | GUI_TA_VCENTER, strlen(leftText), GUI_ROTATE_CCW);
+    GUI_DispStringInRectEx(leftText, &leftRect, GUI_TA_HCENTER | GUI_TA_VCENTER, 
+                           strlen(leftText), GUI_ROTATE_CCW);
 
     /* Display string in right rectangle rotated clockwise */
-    GUI_DispStringInRectEx(rightText, &rightRect, GUI_TA_HCENTER | GUI_TA_VCENTER, strlen(rightText), GUI_ROTATE_CW);
+    GUI_DispStringInRectEx(rightText, &rightRect, GUI_TA_HCENTER | GUI_TA_VCENTER, 
+                           strlen(rightText), GUI_ROTATE_CW);
 
     /* Display string in middle rectangle with word wrap */
     GUI_DispStringInRectWrap(middleText, &middleRectMargins, GUI_TA_LEFT, GUI_WRAPMODE_WORD);
@@ -472,10 +480,10 @@ void ShowTextWrapAndOrientation(void)
 ********************************************************************************
 *
 * Summary: This function displays the following 2D graphics
-*			1. Horizontal lines with various pen widths
-*			2. Vertical lines with various pen widths
-*			3. Arcs
-*			4. Filled rounded rectangle
+*           1. Horizontal lines with various pen widths
+*           2. Vertical lines with various pen widths
+*           3. Arcs
+*           4. Filled rounded rectangle
 *
 * Parameters:
 *  None
@@ -562,8 +570,8 @@ void Show2DGraphics1(void)
 ********************************************************************************
 *
 * Summary: This function displays the following 2D graphics
-*			1. Concentric circles
-*			2. Concentric ellipses
+*           1. Concentric circles
+*           2. Concentric ellipses
 *
 * Parameters:
 *  None
@@ -640,8 +648,8 @@ void ClearScreen(void)
 ********************************************************************************
 *
 * Summary: This implements a simple "Wait for button press and release"
-*			function.  It first waits for the button to be pressed and then
-*			waits for the button to be released.
+*           function.  It first waits for the button to be pressed and then
+*           waits for the button to be released.
 *
 * Parameters:
 *  None
@@ -656,10 +664,10 @@ void ClearScreen(void)
 void WaitforSwitchPressAndRelease(void)
 {
     /* Wait for SW2 to be pressed */
-    while( CYBSP_BTN_PRESSED != cyhal_gpio_read((cyhal_gpio_t)CYBSP_SW2));
+    while( CYBSP_BTN_PRESSED != cyhal_gpio_read(CYBSP_USER_BTN));
 
     /* Wait for SW2 to be released */
-    while( CYBSP_BTN_PRESSED == cyhal_gpio_read((cyhal_gpio_t)CYBSP_SW2));
+    while( CYBSP_BTN_PRESSED == cyhal_gpio_read(CYBSP_USER_BTN));
 }
 
 /*******************************************************************************
@@ -667,11 +675,11 @@ void WaitforSwitchPressAndRelease(void)
 ********************************************************************************
 *
 * Summary: Following functions are performed
-*			1. Initialize the EmWin library
-*			2. Display the startup screen for 2 seconds
-*			3. Display the instruction screen and wait for key press and release
-*			4. Inside a while loop scroll through the 6 demo pages on every
-*				key press and release
+*           1. Initialize the EmWin library
+*           2. Display the startup screen for 2 seconds
+*           3. Display the instruction screen and wait for key press and release
+*           4. Inside a while loop scroll through the 6 demo pages on every
+*               key press and release
 *
 * Parameters:
 *  None
@@ -685,46 +693,49 @@ void eInkTask(void *arg)
     uint8_t pageNumber = 0;
 
     /* Configure Switch and LEDs*/
-    cyhal_gpio_init((cyhal_gpio_t)CYBSP_SW2, CYHAL_GPIO_DIR_INPUT, CYHAL_GPIO_DRIVE_PULLUP, CYBSP_BTN_OFF);
-    cyhal_gpio_init((cyhal_gpio_t)CYBSP_LED_RGB_RED, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, CYBSP_LED_STATE_OFF);
-    cyhal_gpio_init((cyhal_gpio_t)CYBSP_LED_RGB_GREEN, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, CYBSP_LED_STATE_OFF);
+    cyhal_gpio_init( CYBSP_USER_BTN, CYHAL_GPIO_DIR_INPUT, CYHAL_GPIO_DRIVE_PULLUP, 
+                     CYBSP_BTN_OFF);
+    cyhal_gpio_init( CYBSP_LED_RGB_RED, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, 
+                     CYBSP_LED_STATE_OFF);
+    cyhal_gpio_init( CYBSP_LED_RGB_GREEN, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, 
+                     CYBSP_LED_STATE_OFF);
     
     /* Initialize EmWin driver*/
     GUI_Init();
     
     /* Start the eInk display interface and turn on the display power */
-	Cy_EINK_Start(20);
-	Cy_EINK_Power(1);
+    Cy_EINK_Start(20);
+    Cy_EINK_Power(1);
 
-	/* Show the startup screen */
-	ShowStartupScreen();
-	vTaskDelay(2000);
+    /* Show the startup screen */
+    ShowStartupScreen();
+    vTaskDelay(2000);
 
-	/* Show the instructions screen */
-	ShowInstructionsScreen();
-	WaitforSwitchPressAndRelease();
+    /* Show the instructions screen */
+    ShowInstructionsScreen();
+    WaitforSwitchPressAndRelease();
 
-	for(;;)
-	{
-		cyhal_gpio_write((cyhal_gpio_t)CYBSP_LED_RGB_GREEN, CYBSP_LED_STATE_ON);
+    for(;;)
+    {
+        cyhal_gpio_write( CYBSP_LED_RGB_GREEN, CYBSP_LED_STATE_ON);
 
-		/* Using pageNumber as index, update the display with a demo screen
-			Following are the functions that are called in sequence
-				ShowFontSizesNormal()
-				ShowFontSizesBold()
-				ShowTextModes()
-				ShowTextWrapAndOrientation()
-				Show2DGraphics1()
-				Show2DGraphics2()
-		*/
-		(*demoPageArray[pageNumber])();
+        /* Using pageNumber as index, update the display with a demo screen
+            Following are the functions that are called in sequence
+                ShowFontSizesNormal()
+                ShowFontSizesBold()
+                ShowTextModes()
+                ShowTextWrapAndOrientation()
+                Show2DGraphics1()
+                Show2DGraphics2()
+        */
+        (*demoPageArray[pageNumber])();
 
-		cyhal_gpio_write((cyhal_gpio_t)CYBSP_LED_RGB_GREEN, CYBSP_LED_STATE_OFF);
+        cyhal_gpio_write( CYBSP_LED_RGB_GREEN, CYBSP_LED_STATE_OFF);
 
-		/* Wait for a switch press event */
-		WaitforSwitchPressAndRelease();
+        /* Wait for a switch press event */
+        WaitforSwitchPressAndRelease();
 
-		/* Cycle through demo pages */
-		pageNumber = (pageNumber+1) % NUMBER_OF_DEMO_PAGES;
-	}
+        /* Cycle through demo pages */
+        pageNumber = (pageNumber+1) % NUMBER_OF_DEMO_PAGES;
+    }
 }
