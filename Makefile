@@ -28,7 +28,10 @@
 # Basic Configuration
 ################################################################################
 
-# Target board/hardware
+# Target board/hardware (BSP).
+# To change the target, use the Library manager ('make modlibs' from command line).
+# If TARGET is manually edited, ensure TARGET_<BSP>.lib with a valid URL exists
+# in the application, and run 'make getlibs' to fetch BSP contents.
 TARGET=CY8CKIT-062-BLE
 
 # Name of application (used to derive name of final linked file).
@@ -45,8 +48,10 @@ TOOLCHAIN=GCC_ARM
 
 # Default build configuration. Options include:
 #
-# Debug   -- build with minimal optimizations, focus on debugging.
+# Debug -- build with minimal optimizations, focus on debugging.
 # Release -- build with full optimizations
+# Custom -- build with custom configuration, set the optimization flag in CFLAGS
+
 CONFIG=Debug
 
 # If set to "true" or "1", display full command-lines when building.
@@ -107,7 +112,19 @@ CXXFLAGS=
 ASFLAGS=
 
 # Additional / custom linker flags.
+ifeq ($(TOOLCHAIN),GCC_ARM)
+LDFLAGS=-Wl,--undefined=uxTopUsedPriority
+else 
+ifeq ($(TOOLCHAIN),IAR)
+LDFLAGS=--keep uxTopUsedPriority
+else
+ifeq ($(TOOLCHAIN),ARM)
+LDFLAGS=--undefined=uxTopUsedPriority
+else
 LDFLAGS=
+endif
+endif
+endif 
 
 # Additional / custom libraries to link in to the application.
 LDLIBS=

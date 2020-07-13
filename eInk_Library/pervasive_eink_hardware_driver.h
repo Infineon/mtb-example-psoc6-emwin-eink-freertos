@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (2019), Cypress Semiconductor Corporation. All rights reserved.
+* Copyright (2019-2020), Cypress Semiconductor Corporation. All rights reserved.
 *******************************************************************************
 * This software, including source code, documentation and related materials
 * (“Software”), is owned by Cypress Semiconductor Corporation or one of its
@@ -40,16 +40,22 @@
 #define PERVASIVE_EINK_HARDWARE_DRIVER_H
 
 /* Header file includes */
-#include <eInk_Library/cy_eink_psoc_interface.h>
-#include <eInk_Library/pervasive_eink_configuration.h>
-    
+#include "cy_eink_psoc_interface.h"
+#include "pervasive_eink_configuration.h"
+
 /* Macros of the basic frame (white and black) addresses.
    These addresses do not occur as pointers to actual images */
 /* Null pointer is used to denote the white frame */    
 #define PV_EINK_WHITE_FRAME_ADDRESS  NULL
 /* Final address of the main Flash region is used to denote the black frame */
 #define PV_EINK_BLACK_FRAME_ADDRESS  (uint8_t*)0x100FFFFFu
-    
+/* Macro for the dummy byte used in the line data */
+#define PV_EINK_DUMMY_BYTE     (uint8_t)(0x00u)
+/* Data used to initialize the scan bytes */
+#define PV_EINK_SCAN_BYTE_INIT (uint8_t)(0x00u)
+
+#define BUFFERED_WRITE  1
+
 /* Data type of E-INK image */
 typedef unsigned char                pv_eink_frame_data_t;
 
@@ -73,6 +79,50 @@ typedef enum
     PV_EINK_STAGE4
 }   pv_eink_stage_t ;
 
+/* Line data structure of 2.7" display. Refer to driver document Section 5.1 
+   for details */
+struct eink_lineData
+{
+    /*  Dummy byte (0x00) */
+    uint8_t dummyData;
+
+    /*  2.7" even byte array */
+    uint8_t even[PV_EINK_HORIZONTAL_SIZE];
+
+    /*  2.7" scan byte array */
+    uint8_t scan[PV_EINK_SCAN_LINE_SIZE];
+
+    /*  2.7" odd byte array */
+    uint8_t odd[PV_EINK_HORIZONTAL_SIZE];
+};
+
+/* Packet structure of a line data */
+typedef union
+{
+    /* Line data structure of 2.7" E-INK display */
+    struct eink_lineData    lineDataBySize;
+
+    /* Line buffer equal to the data line size */
+    uint8_t                 lineBuffer[PV_EINK_DATA_LINE_SIZE];
+
+    /* The maximum line buffer data size as length */
+}   driver_data_packet_t;
+
+/* Variables that store the driver timing information */
+extern uint16_t              fullUpdateTime;
+extern uint16_t              partialUpdateTime;
+
+/* Pointers for the data structures used by the driver */
+extern uint8_t*              dataLineEven;
+extern uint8_t*              dataLineOdd;
+extern uint8_t*              dataLineScan;
+
+/* Scan table for the four stages of display update*/
+extern uint8_t const        scanTable[PV_EINK_SCAN_TABLE_SIZE];
+
+/* The SPI register addresses for Channel Select */
+extern uint8_t const        channelSelect[PV_EINK_CHANNEL_SEL_SIZE];
+
 /* Declarations of functions defined in pv_eink_hardware_driver.c */
 /* Power control and initialization functions */
 void                Pv_EINK_Init(void);
@@ -83,10 +133,13 @@ pv_eink_status_t    Pv_EINK_HardwarePowerOff(void);
 void    Pv_EINK_SetTempFactor(int8_t temperature);
 
 /* Display update functions */
-void    Pv_EINK_FullStageHandler(pv_eink_frame_data_t* imagePtr, pv_eink_stage_t stageNumber);
-void    Pv_EINK_PartialStageHandler(pv_eink_frame_data_t* previousImagePtr, 
+void    Pv_EINK_FullStageHandler(pv_eink_frame_data_t* imagePtr,
+                                 pv_eink_stage_t stageNumber);
+void    Pv_EINK_PartialStageHandler(pv_eink_frame_data_t* previousImagePtr,
                                     pv_eink_frame_data_t* newImagePtr);
-int Cy_EINK_WriteSPIBuffer(uint8_t* data, uint16 dataLength);
+int     Cy_EINK_WriteSPIBuffer(uint8_t* data, uint16 dataLength);
+void    Pv_EINK_SendData(uint8_t regAddr, uint8_t* data, uint16_t dataLength);
+void    Pv_EINK_SendByte(uint8_t regAddr, uint8_t data);
 
 #endif  /* PERVASIVE_EINK_HARDWARE_DRIVER_H */
 /* [] END OF FILE */

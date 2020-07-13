@@ -56,7 +56,7 @@
 #include "cy_eink_psoc_interface.h"
 
 /* Define SPI interface to communicate with the EInk driver */
-cyhal_spi_t	SPI;
+cyhal_spi_t SPI;
 
 static uint32_t timerCount;
 
@@ -78,13 +78,13 @@ static uint32_t timerCount;
 *******************************************************************************/
 void CY_EINK_InitDriver(void)
 {
-	cyhal_gpio_init(EINK_DISPCS, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, 0);
-	cyhal_gpio_init(EINK_DISPRST, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, 0);
-	cyhal_gpio_init(EINK_DISPBUSY, CYHAL_GPIO_DIR_INPUT, CYHAL_GPIO_DRIVE_NONE, 0);
-	cyhal_gpio_init(EINK_DISCHARGE, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, 0);
-	cyhal_gpio_init(EINK_DISPEN, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, 0);
-	cyhal_gpio_init(EINK_BORDER, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, 0);
-	cyhal_gpio_init(EINK_DISPIOEN, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, 0);
+    cyhal_gpio_init(EINK_DISPCS, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, 0);
+    cyhal_gpio_init(EINK_DISPRST, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, 0);
+    cyhal_gpio_init(EINK_DISPBUSY, CYHAL_GPIO_DIR_INPUT, CYHAL_GPIO_DRIVE_NONE, 0);
+    cyhal_gpio_init(EINK_DISCHARGE, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, 0);
+    cyhal_gpio_init(EINK_DISPEN, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, 0);
+    cyhal_gpio_init(EINK_BORDER, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, 0);
+    cyhal_gpio_init(EINK_DISPIOEN, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, 0);
 }
 
 /*******************************************************************************
@@ -105,7 +105,7 @@ void CY_EINK_InitDriver(void)
 *******************************************************************************/
 void Cy_EINK_TimerInit(void)
 {   
-	timerCount = xTaskGetTickCount();
+    timerCount = xTaskGetTickCount();
 }
 
 /*******************************************************************************
@@ -127,7 +127,7 @@ void Cy_EINK_TimerInit(void)
 uint32_t Cy_EINK_GetTimeTick(void)
 {
     /* Return the current value of time tick */
-	return(xTaskGetTickCount()-timerCount);
+    return(xTaskGetTickCount()-timerCount);
 }
 
 /*******************************************************************************
@@ -170,8 +170,8 @@ void Cy_EINK_TimerStop(void)
 void Cy_EINK_InitSPI(void)
 {
     /* Start the SPI master */
-	cyhal_spi_init(&SPI, EINK_MOSI, EINK_MISO, EINK_SCLK, NC, NULL, 8, CYHAL_SPI_MODE_00_MSB, false);
-	cyhal_spi_set_frequency(&SPI, 20000000);
+    cyhal_spi_init(&SPI, EINK_MOSI, EINK_MISO, EINK_SCLK, NC, NULL, 8, CYHAL_SPI_MODE_00_MSB, false);
+    cyhal_spi_set_frequency(&SPI, 20000000);
 
     /* Make the chip select HIGH */
     CY_EINK_CsHigh;
@@ -217,7 +217,7 @@ void Cy_EINK_AttachSPI(void)
 *******************************************************************************/
 void Cy_EINK_DetachSPI(void)
 {
-	CY_EINK_CsLow;
+    CY_EINK_CsLow;
 }
 
 /*******************************************************************************
@@ -260,9 +260,9 @@ void Cy_EINK_WriteSPI(uint8_t data)
 *******************************************************************************/
 uint8_t Cy_EINK_ReadSPI(void)
 {
-	uint32_t readData;
-	cyhal_spi_recv(&SPI, &readData);
-	return (uint8_t)readData;
+    uint32_t readData;
+    cyhal_spi_recv(&SPI, &readData);
+    return (uint8_t)readData;
 }
 
 /*******************************************************************************
@@ -283,10 +283,10 @@ uint8_t Cy_EINK_ReadSPI(void)
 *******************************************************************************/
 uint8_t Cy_EINK_WriteReadSPI(uint8_t data)
 {
-	uint32_t readData;
-	cyhal_spi_send(&SPI, data);
-	cyhal_spi_recv(&SPI, &readData);
-	return (uint8_t)readData;
+    uint32_t readData;
+    cyhal_spi_send(&SPI, data);
+    cyhal_spi_recv(&SPI, &readData);
+    return (uint8_t)readData;
 }
 
 /*******************************************************************************

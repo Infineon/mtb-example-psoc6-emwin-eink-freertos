@@ -1,6 +1,21 @@
 /******************************************************************************
 * 
-* File Name: eInkTask.c
+* File Name: eink_task.c
+*
+* Description: This file contains task and functions related to the of E-Ink
+* that demonstrates controlling a EInk display using the EmWin Graphics Library.
+* The project displays a start up screen with Cypress logo and
+* text "CYPRESS EMWIN GRAPHICS DEMO EINK DISPLAY".
+*
+* The project then displays the following screens in a loop
+*
+*   1. A screen showing various text alignments, styles and modes
+*   2. A screen showing normal fonts
+*   3. A screen showing bold fonts
+*   4. A screen showing 2D graphics with horizontal lines, vertical lines
+*       arcs and filled rounded rectangle
+*   5. A screen showing 2D graphics with concentric circles and ellipses
+*   6. A screen showing a text box with wrapped text
 *
 *******************************************************************************
 * (c) 2019-2020, Cypress Semiconductor Corporation. All rights reserved.
@@ -33,21 +48,6 @@
 * system or application assumes all risk of such use and in doing so agrees to
 * indemnify Cypress against all liability.
 *******************************************************************************/
-/******************************************************************************
-* This file contains the code of E-Ink that demonstrates controlling a EInk
-* display using the EmWin Graphics Library. The project displays a start up
-* screen with Cypress logo and text "CYPRESS EMWIN GRAPHICS DEMO EINK DISPLAY".
-* The project then displays the following screens in a loop
-*
-*   1. A screen showing various text alignments, styles and modes
-*   2. A screen showing normal fonts
-*   3. A screen showing bold fonts
-*   4. A screen showing 2D graphics with horizontal lines, vertical lines
-*       arcs and filled rounded rectangle
-*   5. A screen showing 2D graphics with concentric circles and ellipses
-*   6. A screen showing a text box with wrapped text
-*
- *******************************************************************************/
 #include "cyhal.h"
 #include "cybsp.h"
 #include "GUI.h"
@@ -56,45 +56,38 @@
 #include "LCDConf.h"
 #include "FreeRTOS.h"
 #include "task.h"
-
-/* External global references */
-extern GUI_CONST_STORAGE GUI_BITMAP bmCypressLogoFullColor_PNG_1bpp;
-
-/* Display frame buffer cache */
-uint8 imageBufferCache[PV_EINK_IMAGE_SIZE] = {0};
-
-/* Function prototypes */
-void ShowFontSizesNormal(void);
-void ShowFontSizesBold(void);
-void ShowTextModes(void);
-void ShowTextWrapAndOrientation(void);
-void Show2DGraphics1(void);
-void Show2DGraphics2(void);
-
-/* Array of demo pages functions */
-void (*demoPageArray[])(void) = {
-    ShowFontSizesNormal,
-    ShowFontSizesBold,
-    ShowTextModes,
-    ShowTextWrapAndOrientation,
-    Show2DGraphics1,
-    Show2DGraphics2
-};
-
-/* Number of demo pages */
-#define NUMBER_OF_DEMO_PAGES    (sizeof(demoPageArray)/sizeof(demoPageArray[0]))
-
-uint16_t ElapsedTime = 0;
+#include "images.h"
 
 /*******************************************************************************
-* Function Name: void UpdateDisplay(void)
+* Macros
+*******************************************************************************/
+#define DELAY_AFTER_STARTUP_SCREEN_MS       (2000)
+#define AMBIENT_TEMPERATURE_CELCIUS         (20)
+
+/*******************************************************************************
+* Forward declaration
+*******************************************************************************/
+void show_font_sizes_normal(void);
+void show_font_sizes_bold(void);
+void show_text_modes(void);
+void show_text_wrap_and_orientation(void);
+void show_2d_graphics_1(void);
+void show_2d_graphics_2(void);
+void update_display(cy_eink_update_t update_method, bool power_cycle);
+void show_startup_screen(void);
+void show_instructions_screen(void);
+void wait_for_switch_press_and_release(void);
+void clear_screen(void);
+
+/*******************************************************************************
+* Function Name: void update_display(void)
 ********************************************************************************
 *
 * Summary: This function updates the display with the data in the display
-*           buffer.  The function first transfers the content of the EmWin
-*           display buffer to the primary EInk display buffer.  Then it calls
-*           the Cy_EINK_ShowFrame function to update the display, and then
-*           it copies the EmWin display buffer to the Eink display cache buffer
+*          buffer.  The function first transfers the content of the EmWin
+*          display buffer to the primary EInk display buffer.  Then it calls
+*          the Cy_EINK_ShowFrame function to update the display, and then
+*          it copies the EmWin display buffer to the Eink display cache buffer
 *
 * Parameters:
 *  None
@@ -107,22 +100,25 @@ uint16_t ElapsedTime = 0;
 *  and only returns after the display refresh
 *
 *******************************************************************************/
-void UpdateDisplay(cy_eink_update_t updateMethod, bool powerCycle)
+void update_display(cy_eink_update_t update_method, bool power_cycle)
 {
-    cy_eink_frame_t* pEmwinBuffer;
+    cy_eink_frame_t* pEmwin_buffer;
+
+    /* Display frame buffer cache */
+    uint8 image_buffer_cache[PV_EINK_IMAGE_SIZE] = {0};
 
     /* Get the pointer to Emwin's display buffer */
-    pEmwinBuffer = (cy_eink_frame_t*)LCD_GetDisplayBuffer();
+    pEmwin_buffer = (cy_eink_frame_t*)LCD_GetDisplayBuffer();
 
     /* Update the EInk display */
-    Cy_EINK_ShowFrame(imageBufferCache, pEmwinBuffer, updateMethod, powerCycle);
+    Cy_EINK_ShowFrame(image_buffer_cache, pEmwin_buffer, update_method, power_cycle);
 
     /* Copy the EmWin display buffer to the imageBuffer cache*/
-    memcpy(imageBufferCache, pEmwinBuffer, CY_EINK_FRAME_SIZE);
+    memcpy(image_buffer_cache, pEmwin_buffer, CY_EINK_FRAME_SIZE);
 }
 
 /*******************************************************************************
-* Function Name: void ShowStartupScreen(void)
+* Function Name: void show_startup_screen(void)
 ********************************************************************************
 *
 * Summary: This function displays the startup screen with Cypress Logo and
@@ -135,7 +131,7 @@ void UpdateDisplay(cy_eink_update_t updateMethod, bool powerCycle)
 *  None
 *
 *******************************************************************************/
-void ShowStartupScreen(void)
+void show_startup_screen(void)
 {
     /* Set foreground and background color and font size */
     GUI_SetFont(GUI_FONT_16B_1);
@@ -152,12 +148,12 @@ void ShowStartupScreen(void)
     GUI_DispStringAt("EINK DISPLAY DEMO", 132, 125);
 
     /* Send the display buffer data to display*/
-    UpdateDisplay(CY_EINK_FULL_4STAGE, true);
+    update_display(CY_EINK_FULL_4STAGE, true);
 }
 
 
 /*******************************************************************************
-* Function Name: void ShowInstructionsScreen(void)
+* Function Name: void show_instructions_screen(void)
 ********************************************************************************
 *
 * Summary: This function shows screen with instructions to press SW2 to
@@ -170,7 +166,7 @@ void ShowStartupScreen(void)
 *  None
 *
 *******************************************************************************/
-void ShowInstructionsScreen(void)
+void show_instructions_screen(void)
 {
     /* Set font size, background color and text mode */
     GUI_SetFont(GUI_FONT_16B_1);
@@ -190,12 +186,12 @@ void ShowInstructionsScreen(void)
     GUI_DispStringAt("DEMO PAGES!", 132, 98);
 
     /* Send the display buffer data to display*/
-    UpdateDisplay(CY_EINK_FULL_4STAGE, true);
+    update_display(CY_EINK_FULL_4STAGE, true);
 }
 
 
 /*******************************************************************************
-* Function Name: void ShowFontSizesNormal(void)
+* Function Name: void show_font_sizes_normal(void)
 ********************************************************************************
 *
 * Summary: This function shows various font sizes
@@ -207,7 +203,7 @@ void ShowInstructionsScreen(void)
 *  None
 *
 *******************************************************************************/
-void ShowFontSizesNormal(void)
+void show_font_sizes_normal(void)
 {
     /* Set font size, background color and text mode */
     GUI_SetFont(GUI_FONT_13B_1);
@@ -251,12 +247,12 @@ void ShowFontSizesNormal(void)
     GUI_DispStringAt("GUI_Font32_1", 10, 133);
 
     /* Send the display buffer data to display*/
-    UpdateDisplay(CY_EINK_FULL_4STAGE, true);
+    update_display(CY_EINK_FULL_4STAGE, true);
 }
 
 
 /*******************************************************************************
-* Function Name: void ShowFontSizesBold(void)
+* Function Name: void show_font_sizes_bold(void)
 ********************************************************************************
 *
 * Summary: This function shows various font sizes
@@ -268,7 +264,7 @@ void ShowFontSizesNormal(void)
 *  None
 *
 *******************************************************************************/
-void ShowFontSizesBold(void)
+void show_font_sizes_bold(void)
 {
     /* Set font size, background color and text mode */
     GUI_SetFont(GUI_FONT_13B_1);
@@ -312,12 +308,12 @@ void ShowFontSizesBold(void)
     GUI_DispStringAt("GUI_Font32B_1", 5, 141);
 
     /* Send the display buffer data to display*/
-    UpdateDisplay(CY_EINK_FULL_4STAGE, true);
+    update_display(CY_EINK_FULL_4STAGE, true);
 }
 
 
 /*******************************************************************************
-* Function Name: void ShowTextModes(void)
+* Function Name: void show_text_modes(void)
 ********************************************************************************
 *
 * Summary: This function displays the following
@@ -332,7 +328,7 @@ void ShowFontSizesBold(void)
 *  None
 *
 *******************************************************************************/
-void ShowTextModes(void)
+void show_text_modes(void)
 {
     /* Set font size, foreground and background colors */
     GUI_SetFont(GUI_FONT_13B_1);
@@ -405,12 +401,12 @@ void ShowTextModes(void)
     GUI_DispStringAt("TEXT MODE REVERSE", 132, 150);
 
     /* Send the display buffer data to display*/
-    UpdateDisplay(CY_EINK_FULL_4STAGE, true);
+    update_display(CY_EINK_FULL_4STAGE, true);
 }
 
 
 /*******************************************************************************
-* Function Name: void ShowTextWrapAndOrientation(void)
+* Function Name: void show_text_wrap_and_orientation(void)
 ********************************************************************************
 *
 * Summary: This function shows the text orientation and text wrap functions
@@ -422,22 +418,22 @@ void ShowTextModes(void)
 *  None
 *
 *******************************************************************************/
-void ShowTextWrapAndOrientation(void)
+void show_text_wrap_and_orientation(void)
 {
-    GUI_RECT leftRect = {4, 19, 24, 166};
-    GUI_RECT rightRect = {238, 19, 258, 166};
-    GUI_RECT middleRect = {29, 19, 233, 166};
-    GUI_RECT middleRectMargins = {31, 20, 232, 165};
+    GUI_RECT left_rect = {4, 19, 24, 166};
+    GUI_RECT right_rect = {238, 19, 258, 166};
+    GUI_RECT middle_rect = {29, 19, 233, 166};
+    GUI_RECT middle_rect_margins = {31, 20, 232, 165};
 
-    const char leftText[] = "ROTATED TEXT CCW";
-    const char rightText[] = "ROTATED TEXT CW";
+    const char left_text[] = "ROTATED TEXT CCW";
+    const char right_text[] = "ROTATED TEXT CW";
 
-    const char middleText[] = "This project demonstrates displaying 2D graphics"
-                              " in an EInk display using Segger EmWin Graphics "
-                              "Library. \n\nThis page shows the text wrap and "
-                              "text rotation features. In the left rectangle, "
-                              "the text is rotated counter clockwise and in the"
-                              " right rectangle, the text is rotated clockwise.";
+    const char middle_text[] = "This project demonstrates displaying 2D graphics"
+                               " in an EInk display using Segger EmWin Graphics "
+                               "Library. \n\nThis page shows the text wrap and "
+                               "text rotation features. In the left rectangle, "
+                               "the text is rotated counter clockwise and in the"
+                               " right rectangle, the text is rotated clockwise.";
 
 
     /* Set font size, foreground and background colors */
@@ -455,28 +451,29 @@ void ShowTextWrapAndOrientation(void)
     GUI_DispStringAt("4 OF 6: TEXT WRAP AND ROTATION", 132, 5);
 
     /* Draw rectangles to hold text */
-    GUI_DrawRectEx(&leftRect);
-    GUI_DrawRectEx(&rightRect);
-    GUI_DrawRectEx(&middleRect);
+    GUI_DrawRectEx(&left_rect);
+    GUI_DrawRectEx(&right_rect);
+    GUI_DrawRectEx(&middle_rect);
 
     /* Display string in left rectangle rotated counter clockwise */
-    GUI_DispStringInRectEx(leftText, &leftRect, GUI_TA_HCENTER | GUI_TA_VCENTER, 
-                           strlen(leftText), GUI_ROTATE_CCW);
+    GUI_DispStringInRectEx(left_text, &left_rect, GUI_TA_HCENTER | GUI_TA_VCENTER,
+                           strlen(left_text), GUI_ROTATE_CCW);
 
     /* Display string in right rectangle rotated clockwise */
-    GUI_DispStringInRectEx(rightText, &rightRect, GUI_TA_HCENTER | GUI_TA_VCENTER, 
-                           strlen(rightText), GUI_ROTATE_CW);
+    GUI_DispStringInRectEx(right_text, &right_rect, GUI_TA_HCENTER | GUI_TA_VCENTER,
+                           strlen(right_text), GUI_ROTATE_CW);
 
     /* Display string in middle rectangle with word wrap */
-    GUI_DispStringInRectWrap(middleText, &middleRectMargins, GUI_TA_LEFT, GUI_WRAPMODE_WORD);
+    GUI_DispStringInRectWrap(middle_text, &middle_rect_margins,
+                             GUI_TA_LEFT, GUI_WRAPMODE_WORD);
 
     /* Send the display buffer data to display*/
-    UpdateDisplay(CY_EINK_FULL_4STAGE, true);
+    update_display(CY_EINK_FULL_4STAGE, true);
 }
 
 
 /*******************************************************************************
-* Function Name: void Show2DGraphics1(void)
+* Function Name: void show_2d_graphics_1(void)
 ********************************************************************************
 *
 * Summary: This function displays the following 2D graphics
@@ -492,7 +489,7 @@ void ShowTextWrapAndOrientation(void)
 *  None
 *
 *******************************************************************************/
-void Show2DGraphics1(void)
+void show_2d_graphics_1(void)
 {
     /* Set font size, foreground and background colors */
     GUI_SetColor(GUI_BLACK);
@@ -561,12 +558,12 @@ void Show2DGraphics1(void)
     GUI_FillRoundedRect(146, 108, 262, 160, 5);
 
     /* Send the display buffer data to display*/
-    UpdateDisplay(CY_EINK_FULL_4STAGE, true);
+    update_display(CY_EINK_FULL_4STAGE, true);
 }
 
 
 /*******************************************************************************
-* Function Name: void Show2DGraphics2(void)
+* Function Name: void show_2d_graphics_2(void)
 ********************************************************************************
 *
 * Summary: This function displays the following 2D graphics
@@ -580,7 +577,7 @@ void Show2DGraphics1(void)
 *  None
 *
 *******************************************************************************/
-void Show2DGraphics2(void)
+void show_2d_graphics_2(void)
 {
     /* Set font size, foreground and background colors */
     GUI_SetColor(GUI_BLACK);
@@ -617,12 +614,12 @@ void Show2DGraphics2(void)
     GUI_DrawEllipse(204, 51, 20, 15);
 
     /* Send the display buffer data to display*/
-    UpdateDisplay(CY_EINK_FULL_4STAGE, true);
+    update_display(CY_EINK_FULL_4STAGE, true);
 }
 
 
 /*******************************************************************************
-* Function Name: void ClearScreen(void)
+* Function Name: void clear_screen(void)
 ********************************************************************************
 *
 * Summary: This function clears the screen
@@ -634,17 +631,17 @@ void Show2DGraphics2(void)
 *  None
 *
 *******************************************************************************/
-void ClearScreen(void)
+void clear_screen(void)
 {
     GUI_SetColor(GUI_BLACK);
     GUI_SetBkColor(GUI_WHITE);
     GUI_Clear();
-    UpdateDisplay(CY_EINK_FULL_4STAGE, true);
+    update_display(CY_EINK_FULL_4STAGE, true);
 }
 
 
 /*******************************************************************************
-* Function Name: void WaitforSwitchPressAndRelease(void)
+* Function Name: void wait_for_switch_press_and_release(void)
 ********************************************************************************
 *
 * Summary: This implements a simple "Wait for button press and release"
@@ -661,7 +658,7 @@ void ClearScreen(void)
 *  This is a blocking function and exits only on a button press and release
 *
 *******************************************************************************/
-void WaitforSwitchPressAndRelease(void)
+void wait_for_switch_press_and_release(void)
 {
     /* Wait for SW2 to be pressed */
     while( CYBSP_BTN_PRESSED != cyhal_gpio_read(CYBSP_USER_BTN));
@@ -671,7 +668,7 @@ void WaitforSwitchPressAndRelease(void)
 }
 
 /*******************************************************************************
-* Function Name: void eInkTask(void *arg)
+* Function Name: void eInk_task(void *arg)
 ********************************************************************************
 *
 * Summary: Following functions are performed
@@ -688,54 +685,64 @@ void WaitforSwitchPressAndRelease(void)
 *  None
 *
 *******************************************************************************/
-void eInkTask(void *arg)
+void eInk_task(void *arg)
 {
-    uint8_t pageNumber = 0;
+    uint8_t page_number = 0;
+
+    /* Array of demo pages functions */
+    void (*demoPageArray[])(void) = {
+        show_font_sizes_normal,
+        show_font_sizes_bold,
+        show_text_modes,
+        show_text_wrap_and_orientation,
+        show_2d_graphics_1,
+        show_2d_graphics_2
+    };
+
+    uint8_t num_of_demo_pages = (sizeof(demoPageArray)/sizeof(demoPageArray[0]));
 
     /* Configure Switch and LEDs*/
     cyhal_gpio_init( CYBSP_USER_BTN, CYHAL_GPIO_DIR_INPUT, CYHAL_GPIO_DRIVE_PULLUP, 
                      CYBSP_BTN_OFF);
-    cyhal_gpio_init( CYBSP_LED_RGB_RED, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, 
-                     CYBSP_LED_STATE_OFF);
-    cyhal_gpio_init( CYBSP_LED_RGB_GREEN, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG, 
+    cyhal_gpio_init( CYBSP_USER_LED, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG,
                      CYBSP_LED_STATE_OFF);
     
     /* Initialize EmWin driver*/
     GUI_Init();
     
     /* Start the eInk display interface and turn on the display power */
-    Cy_EINK_Start(20);
-    Cy_EINK_Power(1);
+    Cy_EINK_Start(AMBIENT_TEMPERATURE_CELCIUS);
+    Cy_EINK_Power(true);
 
     /* Show the startup screen */
-    ShowStartupScreen();
-    vTaskDelay(2000);
+    show_startup_screen();
+    vTaskDelay(DELAY_AFTER_STARTUP_SCREEN_MS);
 
     /* Show the instructions screen */
-    ShowInstructionsScreen();
-    WaitforSwitchPressAndRelease();
+    show_instructions_screen();
+    wait_for_switch_press_and_release();
 
     for(;;)
     {
-        cyhal_gpio_write( CYBSP_LED_RGB_GREEN, CYBSP_LED_STATE_ON);
+        cyhal_gpio_write( CYBSP_USER_LED, CYBSP_LED_STATE_ON);
 
-        /* Using pageNumber as index, update the display with a demo screen
+        /* Using page_number as index, update the display with a demo screen
             Following are the functions that are called in sequence
-                ShowFontSizesNormal()
-                ShowFontSizesBold()
-                ShowTextModes()
-                ShowTextWrapAndOrientation()
-                Show2DGraphics1()
-                Show2DGraphics2()
+                show_font_sizes_normal()
+                show_font_sizes_bold()
+                show_text_modes()
+                show_text_wrap_and_orientation()
+                show_2d_graphics_1()
+                show_2d_graphics_2()
         */
-        (*demoPageArray[pageNumber])();
+        (*demoPageArray[page_number])();
 
-        cyhal_gpio_write( CYBSP_LED_RGB_GREEN, CYBSP_LED_STATE_OFF);
+        cyhal_gpio_write( CYBSP_USER_LED, CYBSP_LED_STATE_OFF);
 
         /* Wait for a switch press event */
-        WaitforSwitchPressAndRelease();
+        wait_for_switch_press_and_release();
 
         /* Cycle through demo pages */
-        pageNumber = (pageNumber+1) % NUMBER_OF_DEMO_PAGES;
+        page_number = (page_number+1) % num_of_demo_pages;
     }
 }

@@ -202,7 +202,7 @@ int LCD_X_DisplayDriver(unsigned LayerIndex, unsigned Cmd, void * pData)
     // to be adapted by the customer...
     //
     // ...
-	CY_EINK_InitDriver();
+    CY_EINK_InitDriver();
     r = 0;
     break;
 

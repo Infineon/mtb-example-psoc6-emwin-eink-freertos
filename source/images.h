@@ -1,6 +1,9 @@
 /******************************************************************************
-* 
-* File Name: eInkTask.h
+*
+* File Name: images.h
+*
+* Description: This file contains the global references of the EmWin bitmap
+* images being used.
 *
 *******************************************************************************
 * (c) 2019-2020, Cypress Semiconductor Corporation. All rights reserved.
@@ -33,10 +36,10 @@
 * system or application assumes all risk of such use and in doing so agrees to
 * indemnify Cypress against all liability.
 *******************************************************************************/
+#ifndef SOURCE_IMAGES_H_
+#define SOURCE_IMAGES_H_
 
-#ifndef EINKTASK_H_
-#define EINKTASK_H_
+/* External global references */
+extern GUI_CONST_STORAGE GUI_BITMAP bmCypressLogoFullColor_PNG_1bpp;
 
-void eInkTask(void *arg);
-
-#endif /* EINKTASK_H_ */
+#endif /* SOURCE_IMAGES_H_ */
