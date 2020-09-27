@@ -89,6 +89,7 @@ int main(void)
     cyhal_clock_get(&clock_fll, &CYHAL_CLOCK_FLL);
     cyhal_clock_init(&clock_fll);
     cyhal_clock_set_frequency(&clock_fll, CLOCK_100_MHZ, NULL);
+    cyhal_clock_set_enabled(&clock_fll, true, true);
 
     /* Initialize the HF0 and set source as FLL */
     cyhal_clock_get(&clock_hf0, &CYHAL_CLOCK_HF[0]);

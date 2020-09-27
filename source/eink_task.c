@@ -51,18 +51,47 @@
 #include "cyhal.h"
 #include "cybsp.h"
 #include "GUI.h"
-#include "pervasive_eink_hardware_driver.h"
-#include "cy_eink_library.h"
+#include "cy8ckit_028_epd_pins.h"
+#include "mtb_e2271cs021.h"
 #include "LCDConf.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "images.h"
 
 /*******************************************************************************
+* Global variables
+*******************************************************************************/
+/* HAL SPI object to interface with display driver */
+cyhal_spi_t spi; 
+
+/* Configuration structure defining the necessary pins to communicate with
+ * the E-ink display */
+const mtb_e2271cs021_pins_t pins =
+{
+    .spi_mosi = CY8CKIT_028_EPD_PIN_DISPLAY_SPI_MOSI,
+    .spi_miso = CY8CKIT_028_EPD_PIN_DISPLAY_SPI_MISO,
+    .spi_sclk = CY8CKIT_028_EPD_PIN_DISPLAY_SPI_SCLK,
+    .spi_cs = CY8CKIT_028_EPD_PIN_DISPLAY_CS,
+    .reset = CY8CKIT_028_EPD_PIN_DISPLAY_RST,
+    .busy = CY8CKIT_028_EPD_PIN_DISPLAY_BUSY,
+    .discharge = CY8CKIT_028_EPD_PIN_DISPLAY_DISCHARGE,
+    .enable = CY8CKIT_028_EPD_PIN_DISPLAY_EN,
+    .border = CY8CKIT_028_EPD_PIN_DISPLAY_BORDER,
+    .io_enable = CY8CKIT_028_EPD_PIN_DISPLAY_IOEN,
+};
+
+/* Buffer to the previous frame written on the display */
+uint8_t previous_frame[PV_EINK_IMAGE_SIZE] = {0};
+
+/* Pointer to the new frame that need to be written */
+uint8_t *current_frame;
+
+/*******************************************************************************
 * Macros
 *******************************************************************************/
 #define DELAY_AFTER_STARTUP_SCREEN_MS       (2000)
-#define AMBIENT_TEMPERATURE_CELCIUS         (20)
+#define AMBIENT_TEMPERATURE_C               (20)
+#define SPI_BAUD_RATE_HZ                    (20000000)
 
 /*******************************************************************************
 * Forward declaration
@@ -73,49 +102,10 @@ void show_text_modes(void);
 void show_text_wrap_and_orientation(void);
 void show_2d_graphics_1(void);
 void show_2d_graphics_2(void);
-void update_display(cy_eink_update_t update_method, bool power_cycle);
 void show_startup_screen(void);
 void show_instructions_screen(void);
 void wait_for_switch_press_and_release(void);
 void clear_screen(void);
-
-/*******************************************************************************
-* Function Name: void update_display(void)
-********************************************************************************
-*
-* Summary: This function updates the display with the data in the display
-*          buffer.  The function first transfers the content of the EmWin
-*          display buffer to the primary EInk display buffer.  Then it calls
-*          the Cy_EINK_ShowFrame function to update the display, and then
-*          it copies the EmWin display buffer to the Eink display cache buffer
-*
-* Parameters:
-*  None
-*
-* Return:
-*  None
-*
-* Side Effects:
-*  It takes about a second to refresh the display.  This is a blocking function
-*  and only returns after the display refresh
-*
-*******************************************************************************/
-void update_display(cy_eink_update_t update_method, bool power_cycle)
-{
-    cy_eink_frame_t* pEmwin_buffer;
-
-    /* Display frame buffer cache */
-    uint8 image_buffer_cache[PV_EINK_IMAGE_SIZE] = {0};
-
-    /* Get the pointer to Emwin's display buffer */
-    pEmwin_buffer = (cy_eink_frame_t*)LCD_GetDisplayBuffer();
-
-    /* Update the EInk display */
-    Cy_EINK_ShowFrame(image_buffer_cache, pEmwin_buffer, update_method, power_cycle);
-
-    /* Copy the EmWin display buffer to the imageBuffer cache*/
-    memcpy(image_buffer_cache, pEmwin_buffer, CY_EINK_FRAME_SIZE);
-}
 
 /*******************************************************************************
 * Function Name: void show_startup_screen(void)
@@ -146,9 +136,6 @@ void show_startup_screen(void)
     GUI_DispStringAt("EMWIN GRAPHICS", 132, 105);
     GUI_SetTextAlign(GUI_TA_HCENTER);
     GUI_DispStringAt("EINK DISPLAY DEMO", 132, 125);
-
-    /* Send the display buffer data to display*/
-    update_display(CY_EINK_FULL_4STAGE, true);
 }
 
 
@@ -184,9 +171,6 @@ void show_instructions_screen(void)
     GUI_DispStringAt("TO SCROLL THROUGH ", 132, 78);
     GUI_SetTextAlign(GUI_TA_HCENTER);
     GUI_DispStringAt("DEMO PAGES!", 132, 98);
-
-    /* Send the display buffer data to display*/
-    update_display(CY_EINK_FULL_4STAGE, true);
 }
 
 
@@ -245,9 +229,6 @@ void show_font_sizes_normal(void)
     /* Font32_1*/
     GUI_SetFont(GUI_FONT_32_1);
     GUI_DispStringAt("GUI_Font32_1", 10, 133);
-
-    /* Send the display buffer data to display*/
-    update_display(CY_EINK_FULL_4STAGE, true);
 }
 
 
@@ -306,9 +287,6 @@ void show_font_sizes_bold(void)
     /* Font32B_1*/
     GUI_SetFont(GUI_FONT_32B_1);
     GUI_DispStringAt("GUI_Font32B_1", 5, 141);
-
-    /* Send the display buffer data to display*/
-    update_display(CY_EINK_FULL_4STAGE, true);
 }
 
 
@@ -399,9 +377,6 @@ void show_text_modes(void)
     GUI_SetTextAlign(GUI_TA_HCENTER);
     GUI_SetTextMode(GUI_TM_REV);
     GUI_DispStringAt("TEXT MODE REVERSE", 132, 150);
-
-    /* Send the display buffer data to display*/
-    update_display(CY_EINK_FULL_4STAGE, true);
 }
 
 
@@ -466,9 +441,6 @@ void show_text_wrap_and_orientation(void)
     /* Display string in middle rectangle with word wrap */
     GUI_DispStringInRectWrap(middle_text, &middle_rect_margins,
                              GUI_TA_LEFT, GUI_WRAPMODE_WORD);
-
-    /* Send the display buffer data to display*/
-    update_display(CY_EINK_FULL_4STAGE, true);
 }
 
 
@@ -556,9 +528,6 @@ void show_2d_graphics_1(void)
 
     /* Rounded rectangle */
     GUI_FillRoundedRect(146, 108, 262, 160, 5);
-
-    /* Send the display buffer data to display*/
-    update_display(CY_EINK_FULL_4STAGE, true);
 }
 
 
@@ -611,10 +580,7 @@ void show_2d_graphics_2(void)
     GUI_DrawEllipse(204, 51, 50, 30);
     GUI_DrawEllipse(204, 51, 40, 25);
     GUI_DrawEllipse(204, 51, 30, 20);
-    GUI_DrawEllipse(204, 51, 20, 15);
-
-    /* Send the display buffer data to display*/
-    update_display(CY_EINK_FULL_4STAGE, true);
+    GUI_DrawEllipse(204, 51, 20, 15);;
 }
 
 
@@ -636,7 +602,6 @@ void clear_screen(void)
     GUI_SetColor(GUI_BLACK);
     GUI_SetBkColor(GUI_WHITE);
     GUI_Clear();
-    update_display(CY_EINK_FULL_4STAGE, true);
 }
 
 
@@ -687,6 +652,7 @@ void wait_for_switch_press_and_release(void)
 *******************************************************************************/
 void eInk_task(void *arg)
 {
+    cy_rslt_t result;
     uint8_t page_number = 0;
 
     /* Array of demo pages functions */
@@ -707,19 +673,43 @@ void eInk_task(void *arg)
     cyhal_gpio_init( CYBSP_USER_LED, CYHAL_GPIO_DIR_OUTPUT, CYHAL_GPIO_DRIVE_STRONG,
                      CYBSP_LED_STATE_OFF);
     
+    /* Initialize SPI and EINK display */
+    result = cyhal_spi_init(&spi, CY8CKIT_028_EPD_PIN_DISPLAY_SPI_MOSI,
+            CY8CKIT_028_EPD_PIN_DISPLAY_SPI_MISO,
+            CY8CKIT_028_EPD_PIN_DISPLAY_SPI_SCLK, NC, NULL, 8,
+            CYHAL_SPI_MODE_00_MSB, false);
+    if (CY_RSLT_SUCCESS == result)
+    {
+        result = cyhal_spi_set_frequency(&spi, SPI_BAUD_RATE_HZ);
+    }
+
+    result = mtb_e2271cs021_init(&pins, &spi);
+
+    /* Set ambient temperature, in degree C, in order to perform temperature
+     * compensation of E-INK parameters */
+    mtb_e2271cs021_set_temp_factor(AMBIENT_TEMPERATURE_C);
+
+    current_frame = (uint8_t*)LCD_GetDisplayBuffer();
+
     /* Initialize EmWin driver*/
     GUI_Init();
-    
-    /* Start the eInk display interface and turn on the display power */
-    Cy_EINK_Start(AMBIENT_TEMPERATURE_CELCIUS);
-    Cy_EINK_Power(true);
 
     /* Show the startup screen */
     show_startup_screen();
+
+    /* Update the display */
+    mtb_e2271cs021_show_frame(previous_frame, current_frame,
+                              MTB_E2271CS021_FULL_4STAGE, true);
+
     vTaskDelay(DELAY_AFTER_STARTUP_SCREEN_MS);
 
     /* Show the instructions screen */
     show_instructions_screen();
+
+    /* Update the display */
+    mtb_e2271cs021_show_frame(previous_frame, current_frame,
+                              MTB_E2271CS021_FULL_4STAGE, true);
+
     wait_for_switch_press_and_release();
 
     for(;;)
@@ -736,6 +726,10 @@ void eInk_task(void *arg)
                 show_2d_graphics_2()
         */
         (*demoPageArray[page_number])();
+
+        /* Update the display */
+        mtb_e2271cs021_show_frame(previous_frame, current_frame,
+                                  MTB_E2271CS021_FULL_4STAGE, true);
 
         cyhal_gpio_write( CYBSP_USER_LED, CYBSP_LED_STATE_OFF);
 
