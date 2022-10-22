@@ -18,22 +18,23 @@
 *   6. A screen showing a text box with wrapped text
 *
 *******************************************************************************
-* (c) 2019-2020, Cypress Semiconductor Corporation. All rights reserved.
-*******************************************************************************
-* This software, including source code, documentation and related materials
-* ("Software"), is owned by Cypress Semiconductor Corporation or one of its
-* subsidiaries ("Cypress") and is protected by and subject to worldwide patent
-* protection (United States and foreign), United States copyright laws and
-* international treaty provisions. Therefore, you may use this Software only
-* as provided in the license agreement accompanying the software package from
-* which you obtained this Software ("EULA").
+* Copyright 2021-2022, Cypress Semiconductor Corporation (an Infineon company) or
+* an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
 *
+* This software, including source code, documentation and related
+* materials ("Software") is owned by Cypress Semiconductor Corporation
+* or one of its affiliates ("Cypress") and is protected by and subject to
+* worldwide patent protection (United States and foreign),
+* United States copyright laws and international treaty provisions.
+* Therefore, you may use this Software only as provided in the license
+* agreement accompanying the software package from which you
+* obtained this Software ("EULA").
 * If no EULA applies, Cypress hereby grants you a personal, non-exclusive,
-* non-transferable license to copy, modify, and compile the Software source
-* code solely for use in connection with Cypress's integrated circuit products.
-* Any reproduction, modification, translation, compilation, or representation
-* of this Software except as specified above is prohibited without the express
-* written permission of Cypress.
+* non-transferable license to copy, modify, and compile the Software
+* source code solely for use in connection with Cypress's
+* integrated circuit products.  Any reproduction, modification, translation,
+* compilation, or representation of this Software except as specified
+* above is prohibited without the express written permission of Cypress.
 *
 * Disclaimer: THIS SOFTWARE IS PROVIDED AS-IS, WITH NO WARRANTY OF ANY KIND,
 * EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, NONINFRINGEMENT, IMPLIED
@@ -44,9 +45,9 @@
 * not authorize its products for use in any products where a malfunction or
 * failure of the Cypress product may reasonably be expected to result in
 * significant property damage, injury or death ("High Risk Product"). By
-* including Cypress's product in a High Risk Product, the manufacturer of such
-* system or application assumes all risk of such use and in doing so agrees to
-* indemnify Cypress against all liability.
+* including Cypress's product in a High Risk Product, the manufacturer
+* of such system or application assumes all risk of such use and in doing
+* so agrees to indemnify Cypress against all liability.
 *******************************************************************************/
 #include "cyhal.h"
 #include "cybsp.h"
@@ -681,62 +682,64 @@ void eInk_task(void *arg)
     if (CY_RSLT_SUCCESS == result)
     {
         result = cyhal_spi_set_frequency(&spi, SPI_BAUD_RATE_HZ);
-    }
+        if (CY_RSLT_SUCCESS == result)
+        {
+            result = mtb_e2271cs021_init(&pins, &spi);
 
-    result = mtb_e2271cs021_init(&pins, &spi);
+            /* Set ambient temperature, in degree C, in order to perform temperature
+             * compensation of E-INK parameters */
+            mtb_e2271cs021_set_temp_factor(AMBIENT_TEMPERATURE_C);
 
-    /* Set ambient temperature, in degree C, in order to perform temperature
-     * compensation of E-INK parameters */
-    mtb_e2271cs021_set_temp_factor(AMBIENT_TEMPERATURE_C);
+            current_frame = (uint8_t*)LCD_GetDisplayBuffer();
 
-    current_frame = (uint8_t*)LCD_GetDisplayBuffer();
+            /* Initialize EmWin driver*/
+            GUI_Init();
 
-    /* Initialize EmWin driver*/
-    GUI_Init();
+            /* Show the startup screen */
+            show_startup_screen();
 
-    /* Show the startup screen */
-    show_startup_screen();
+            /* Update the display */
+            mtb_e2271cs021_show_frame(previous_frame, current_frame,
+                                      MTB_E2271CS021_FULL_4STAGE, true);
 
-    /* Update the display */
-    mtb_e2271cs021_show_frame(previous_frame, current_frame,
-                              MTB_E2271CS021_FULL_4STAGE, true);
+            vTaskDelay(DELAY_AFTER_STARTUP_SCREEN_MS);
 
-    vTaskDelay(DELAY_AFTER_STARTUP_SCREEN_MS);
+            /* Show the instructions screen */
+            show_instructions_screen();
 
-    /* Show the instructions screen */
-    show_instructions_screen();
+            /* Update the display */
+            mtb_e2271cs021_show_frame(previous_frame, current_frame,
+                                      MTB_E2271CS021_FULL_4STAGE, true);
 
-    /* Update the display */
-    mtb_e2271cs021_show_frame(previous_frame, current_frame,
-                              MTB_E2271CS021_FULL_4STAGE, true);
+            wait_for_switch_press_and_release();
 
-    wait_for_switch_press_and_release();
+            for(;;)
+            {
+                cyhal_gpio_write( CYBSP_USER_LED, CYBSP_LED_STATE_ON);
 
-    for(;;)
-    {
-        cyhal_gpio_write( CYBSP_USER_LED, CYBSP_LED_STATE_ON);
+                /* Using page_number as index, update the display with a demo screen
+                    Following are the functions that are called in sequence
+                        show_font_sizes_normal()
+                        show_font_sizes_bold()
+                        show_text_modes()
+                        show_text_wrap_and_orientation()
+                        show_2d_graphics_1()
+                        show_2d_graphics_2()
+                */
+                (*demoPageArray[page_number])();
 
-        /* Using page_number as index, update the display with a demo screen
-            Following are the functions that are called in sequence
-                show_font_sizes_normal()
-                show_font_sizes_bold()
-                show_text_modes()
-                show_text_wrap_and_orientation()
-                show_2d_graphics_1()
-                show_2d_graphics_2()
-        */
-        (*demoPageArray[page_number])();
+                /* Update the display */
+                mtb_e2271cs021_show_frame(previous_frame, current_frame,
+                                          MTB_E2271CS021_FULL_4STAGE, true);
 
-        /* Update the display */
-        mtb_e2271cs021_show_frame(previous_frame, current_frame,
-                                  MTB_E2271CS021_FULL_4STAGE, true);
+                cyhal_gpio_write( CYBSP_USER_LED, CYBSP_LED_STATE_OFF);
 
-        cyhal_gpio_write( CYBSP_USER_LED, CYBSP_LED_STATE_OFF);
+                /* Wait for a switch press event */
+                wait_for_switch_press_and_release();
 
-        /* Wait for a switch press event */
-        wait_for_switch_press_and_release();
-
-        /* Cycle through demo pages */
-        page_number = (page_number+1) % num_of_demo_pages;
+                /* Cycle through demo pages */
+                page_number = (page_number+1) % num_of_demo_pages;
+            }
+        }
     }
 }
