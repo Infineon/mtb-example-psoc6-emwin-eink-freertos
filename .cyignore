@@ -1,3 +1,4 @@
+AppWizProj/Demo/Simulation
 # Documentation
 images
 
@@ -5,4 +6,8 @@ images
 .mtbLaunchConfigs
 .settings
 .vscode
-
+# Below 2 lines are to override the default configuration files and 
+# use the custom configuration files from the application directory.
+# This is a temporary work around until we get the display library updated.
+$(SEARCH_display-eink-e2271cs021)/configs/emwin/GUIConf.c
+$(SEARCH_display-eink-e2271cs021)/configs/emwin/LCDConf.c

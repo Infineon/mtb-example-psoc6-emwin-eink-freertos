@@ -1,13 +1,13 @@
 /******************************************************************************
 * File Name: main.c
 *
-* Description: This code example demonstrates displaying graphics on an EInk
-* display using EmWin graphics library.
+* Description: This code example demonstrates displaying graphics on an E-Ink
+* display using EmWin graphics library and the AppWizard GUI design tool.
 *
 * Related Document: See README.md
 *
 *******************************************************************************
-* Copyright 2021-2022, Cypress Semiconductor Corporation (an Infineon company) or
+* Copyright 2021-2023, Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
 *
 * This software, including source code, documentation and related
@@ -38,19 +38,24 @@
 * of such system or application assumes all risk of such use and in doing
 * so agrees to indemnify Cypress against all liability.
 *******************************************************************************/
+
 #include "cyhal.h"
 #include "cybsp.h"
 #include "cy_retarget_io.h"
 #include "eink_task.h"
 #include "FreeRTOS.h"
 #include "task.h"
-
+#include "GUI.h"
 /*******************************************************************************
 * Macros
 *******************************************************************************/
 #define EINK_TASK_STACK_SIZE        (1024*10)
 #define EINK_TASK_PRIORITY          (configMAX_PRIORITIES - 3)
 #define CLOCK_100_MHZ               (100000000u)
+/*******************************************************************************
+* Function Prototypes
+********************************************************************************/
+
 /*******************************************************************************
 * Function Prototypes
 ********************************************************************************/
@@ -64,9 +69,9 @@ volatile int uxTopUsedPriority;
 /*******************************************************************************
 * Function Name: int main(void)
 ********************************************************************************
-* Summary:
-*  System entrance point. This function sets up the E-Ink task and starts
-*  the RTOS scheduler.
+*
+* Summary: This is the main for this code example.  This function initializes
+*          the BSP, creates the eInk_task and starts the scheduler.
 *
 * Parameters:
 *  None
@@ -93,6 +98,7 @@ int main(void)
     /* Initialize the device and board peripherals */
     result = cybsp_init();
     CY_ASSERT(result == CY_RSLT_SUCCESS);
+
 
     /* Initialize retarget-io to use the debug UART port */
     result = cy_retarget_io_init(CYBSP_DEBUG_UART_TX, CYBSP_DEBUG_UART_RX,

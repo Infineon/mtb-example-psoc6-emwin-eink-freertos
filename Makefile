@@ -7,7 +7,7 @@
 #
 ################################################################################
 # \copyright
-# Copyright 2018-2022, Cypress Semiconductor Corporation (an Infineon company)
+# Copyright 2018-2023, Cypress Semiconductor Corporation (an Infineon company)
 # SPDX-License-Identifier: Apache-2.0
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,9 +30,10 @@
 
 # Type of ModusToolbox Makefile Options include:
 #
-#COMBINED    -- Top Level Makefile usually for single standalone application
-#APPLICATION -- Top Level Makefile usually for multi project application
-#PROJECT     -- Project Makefile under Application
+# COMBINED    -- Top Level Makefile usually for single standalone application
+# APPLICATION -- Top Level Makefile usually for multi project application
+# PROJECT     -- Project Makefile under Application
+#
 MTB_TYPE=COMBINED
 
 # Target board/hardware (BSP).
@@ -40,6 +41,7 @@ MTB_TYPE=COMBINED
 # ('make library-manager' from command line), which will also update Eclipse IDE launch
 # configurations.
 TARGET=CY8CKIT-062-BLE
+
 
 # Name of application (used to derive name of final linked file).
 #
@@ -161,11 +163,13 @@ CY_GETLIBS_SHARED_PATH=../
 #
 CY_GETLIBS_SHARED_NAME=mtb_shared
 
-# Absolute path to the compiler's "bin" directory.
-#
+# Absolute path to the compiler's "bin" directory. The variable name depends on the 
+# toolchain used for the build. Refer to the ModusToolbox user guide to get the correct
+# variable name for the toolchain used in your build.
+# 
 # The default depends on the selected TOOLCHAIN (GCC_ARM uses the ModusToolbox
 # software provided compiler by default).
-CY_COMPILER_PATH=
+CY_COMPILER_GCC_ARM_DIR=
 
 
 # Locate ModusToolbox helper tools folders in default installation

@@ -6,7 +6,7 @@
 * the E-Ink task.
 *
 *******************************************************************************
-* Copyright 2019-2022, Cypress Semiconductor Corporation (an Infineon company) or
+* Copyright 2019-2023, Cypress Semiconductor Corporation (an Infineon company) or
 * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
 *
 * This software, including source code, documentation and related
@@ -42,5 +42,8 @@
 #define EINK_TASK_H_
 
 void eInk_task(void *arg);
+
+void wait_for_switch_press_and_release(void);
+
 
 #endif /* EINK_TASK_H_ */
